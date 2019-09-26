@@ -17,6 +17,7 @@ public:
     u8 *fire1; 
     u8 *fire2; 
     u8 *tmp;
+    int *frame_buffer;
 
     float current_time;
 
@@ -135,7 +136,8 @@ public:
         }
 
 
-       memcpy( vga->video_buffer, fire2, 63040 );
+       memcpy( frame_buffer, fire2, 63040 );
+
     // swap our two fire buffers
        tmp = fire1;
        fire1 = fire2;
