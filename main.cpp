@@ -18,6 +18,11 @@ public:
     u8 *fire2; 
     u8 *tmp;
 
+    olc::Sprite *image;
+
+    int hotspot_start;
+    int hotspot_width;
+
     float current_time;
 
 public:
@@ -41,17 +46,20 @@ public:
     {
          int i, j;
     // add some random hot spots where the text is
-         //for (i=26880; i<52480; i++)
-         //{
-             //if (image[i]>dst[i]) dst[i] = rand()&(image[i]);
-         //}
+         for (j = 84; j < 200; ++j)
+         for (i = 0; i < 320; ++i)
+         {
+             // since using as a value (greyscale) any color channel will do
+             u8 color_val = (u8)image->GetPixel(i, j).r;
+             if (color_val > dst[j*WIDTH+i]) 
+                 dst[j*WIDTH+i] = rand() & color_val;
+         }
          j = (rand() % 1024);
     // add some random hot spots at the bottom of the buffer
     // 
          for (i=0; i<j; i++)
          {
-             //475200 == start of last 6 rows
-             dst[475200+(rand()%4800)] = 255;
+             dst[hotspot_start+(rand()%hotspot_width)] = 255;
          }
     }
 
@@ -94,7 +102,11 @@ public:
     {
         HEIGHT = ScreenHeight();
         WIDTH = ScreenWidth(); 
+
         current_time = 0;
+        hotspot_width = WIDTH * 12;
+        hotspot_start = WIDTH*HEIGHT - hotspot_width;
+
         palette = new u8[256*3];
 
         Shade_Pal( 0, 23, 0, 0, 0, 0, 0, 31 );
@@ -110,12 +122,14 @@ public:
         memset(fire1, 0, WIDTH*HEIGHT);
         memset(fire2, 0, WIDTH*HEIGHT);
 
+        image = new olc::Sprite("image.png");
         return true;    
     }
 
     bool OnUserUpdate(float fElapsedTime) override 
     {
         current_time += fElapsedTime;
+
 
         // heat the fire
         Heat(fire1);
@@ -133,6 +147,8 @@ public:
             }
         }
 
+        //DrawSprite(100, 100, image);
+
     // swap our two fire buffers
        tmp = fire1;
        fire1 = fire2;
@@ -146,6 +162,7 @@ public:
         delete [] fire1;
         delete [] fire2;
         delete [] palette;
+        delete image;
         return true;    
     }
 };
