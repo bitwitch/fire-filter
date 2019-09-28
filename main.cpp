@@ -17,14 +17,11 @@ public:
     u8 *fire1; 
     u8 *fire2; 
     u8 *tmp;
-    int *frame_buffer;
 
     float current_time;
 
 public:
-     /*
-     * create a shade of colours in the palette from start to end
-     */
+    // Create a shade of colours in the palette from start to end
     void Shade_Pal( int start, int end, int r1, int g1, int b1, int r2, int g2, int b2 )
     {
         int i;
@@ -39,10 +36,8 @@ public:
         }
     }
 
-    /*
-     * adds some hot pixels to a buffer
-     */
-    void Heat( unsigned char *dst )
+    // Adds some hot pixels to a buffer
+    void Heat(u8 *dst)
     {
          int i, j;
     // add some random hot spots where the text is
@@ -50,45 +45,49 @@ public:
          //{
              //if (image[i]>dst[i]) dst[i] = rand()&(image[i]);
          //}
-         j = (rand() % 512);
+         j = (rand() % 1024);
     // add some random hot spots at the bottom of the buffer
+    // 
          for (i=0; i<j; i++)
          {
-             dst[63040+(rand()%960)] = 255;
+             //475200 == start of last 6 rows
+             dst[475200+(rand()%4800)] = 255;
          }
     }
 
-
-    /*
-     * smooth a buffer upwards, make sure not to read pixels that are outside of
-     * the buffer!
-     */
+    // Smooth a buffer upwards, make sure not to read pixels that are outside of
+    // the buffer!
     void Blur_Up(u8 *src, u8 *dst)
     {
          int offs = 0;
          u8 b;
          for (int j=0; j<HEIGHT-2; j++)
          {
-         // set first pixel of the line to 0
+             // set first pixel of the line to 0
              dst[offs] = 0; offs++;
          // calculate the filter for all the other pixels
+         // 0 0 0 0 0
+         // 0 0 0 0 0
+         // 0 1 0 1 0
+         // 0 1 1 1 0
+         // 0 1 1 1 0
              for (int i=1; i<WIDTH-1; i++)
              {
-             // calculate the average
-                 b = ( src[offs-1]   +               + src[offs+1]
-                     + src[offs+WIDTH-1] + src[offs+WIDTH] + src[offs+WIDTH+1]
+                 // calculate the average
+                 b = ( src[offs-1]           +                   + src[offs+1]
+                     + src[offs+WIDTH-1]     + src[offs+WIDTH]   + src[offs+WIDTH+1]
                      + src[offs+(2*WIDTH)-1] + src[offs+WIDTH*2] + src[offs+(2*WIDTH)+1] ) >> 3;
-              // decrement the sum by one so that the fire looses intensity
+                 // decrement the sum by one so that the fire looses intensity
                  if (b>0) b--;
-              // store the pixel
+                 // store the pixel
                  dst[offs] = b;
                  offs++;
              }
-         // set last pixel of the line to 0
+             // set last pixel of the line to 0
              dst[offs] = 0; offs++;
          }
-    // clear the last 2 lines
-         memset( (void *)((long)(dst)+offs), 0, 2*WIDTH );
+        // clear the last 2 lines
+        memset( (void *)((long)(dst)+offs), 0, 2*WIDTH );
     }
 
     bool OnUserCreate() override 
@@ -107,10 +106,9 @@ public:
         fire1 = new u8[WIDTH*HEIGHT];
         fire2 = new u8[WIDTH*HEIGHT];
 
-    // clear the buffers
-        memset( fire1, 0, 64000 );
-        memset( fire2, 0, 64000 );
-
+        // clear the buffers
+        memset(fire1, 0, WIDTH*HEIGHT);
+        memset(fire2, 0, WIDTH*HEIGHT);
 
         return true;    
     }
@@ -128,27 +126,25 @@ public:
         int color_val, dst = 0;
         for(int y = 0; y < HEIGHT; y++) { 
             for(int x = 0; x < WIDTH; x++) { 
-                color_val = fire2[dst++];
+                color_val = (int)fire2[dst++];
                 Draw(x, y, olc::Pixel(palette[color_val*3], 
                                       palette[color_val*3+1], 
                                       palette[color_val*3+2]));
             }
         }
 
-
-       memcpy( frame_buffer, fire2, 63040 );
-
     // swap our two fire buffers
        tmp = fire1;
        fire1 = fire2;
        fire2 = tmp;
-
 
         return true;    
     }
 
     bool OnUserDestroy() override 
     {
+        delete [] fire1;
+        delete [] fire2;
         delete [] palette;
         return true;    
     }
@@ -163,4 +159,5 @@ int main () {
     }
     return 0;
 }
+
 
